@@ -18,17 +18,20 @@ import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Scanner;
 
-import javax.imageio.ImageIO;
-import javax.swing.BorderFactory;
-import javax.swing.JColorChooser;
-import javax.swing.JLabel;
-import javax.swing.JMenu;
+
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 import javax.swing.KeyStroke;
+
+import javax.imageio.ImageIO;
+import javax.swing.BorderFactory;
+import javax.swing.JColorChooser;
+import javax.swing.JLabel;
+import javax.swing.JMenu;
+
 
 /**
  * A panel that contains a large drawing area where strings
@@ -51,6 +54,11 @@ public class DrawTextPanel extends JPanel  {
 
  
 
+private JMenuBar menuBar; // a menu bar with command that affect this panel
+ private MenuHandler menuHandler; // a listener that responds whenever the user selects a menu command
+ private JMenuItem undoMenuItem;  // the "Remove Item" command from the edit menu
+
+
  private ArrayList<DrawTextItem> theStrings;  // changed to an ArrayList<DrawTextItem> !
 
 
@@ -59,10 +67,52 @@ public class DrawTextPanel extends JPanel  {
  private Canvas canvas;  // the drawing area.
  private JTextField input;  // where the user inputs the string that will be added to the canvas
  private SimpleFileChooser fileChooser;  // for letting the user select files
- private JMenuBar menuBar; // a menu bar with command that affect this panel
- private MenuHandler menuHandler; // a listener that responds whenever the user selects a menu command
- private JMenuItem undoMenuItem;  // the "Remove Item" command from the edit menu
+ 
 
+
+
+private void openFile() {
+  File openFile = fileChooser.getInputFile(this, "Open Saved File");
+  try {
+   Scanner in = new Scanner(openFile);
+   if (!in.nextLine().equals("New text collage file")) {
+    JOptionPane.showMessageDialog(this, "Not a valid file \"" + openFile + "\".");
+    return;
+   }
+   Color savedBg = new Color(in.nextInt(), in.nextInt(), in.nextInt());
+   ArrayList<DrawTextItem> newStrings = new ArrayList<DrawTextItem>();
+   DrawTextItem newItem;
+   in.nextLine();  //skip to the next line before read a new line
+   while (in.hasNext() && in.nextLine().equals("theString:")) {
+    newItem = new DrawTextItem(in.nextLine(),
+      in.nextInt(), in.nextInt());
+    in.nextLine();  //skip to the next line before read a new line
+    newItem.setFont(new Font(in.nextLine(), in.nextInt(), in.nextInt()));
+    newItem.setTextColor(new Color(in.nextInt(), in.nextInt(), in.nextInt()));
+    newItem.setTextTransparency(in.nextDouble());
+    int r = in.nextInt();
+    int g = in.nextInt();
+    int b = in.nextInt();
+    if (r == -1)
+     newItem.setBackground(null);
+    else
+     newItem.setBackground(new Color(r, g, b));
+    newItem.setBackgroundTransparency(in.nextDouble());
+    newItem.setBorder(in.nextBoolean());
+    newItem.setMagnification(in.nextDouble());
+    newItem.setRotationAngle(in.nextDouble());
+    in.nextLine();  //skip to the next line before read a new line
+    newStrings.add(newItem);
+   }
+   //if no exception occurred, replace the current background and strings
+   canvas.setBackground(savedBg);
+   theStrings = newStrings;
+  } catch (FileNotFoundException e) {
+   JOptionPane.showMessageDialog(this, "Unable to read the file \"" + openFile + "\".");
+   System.out.println("Error message: " + e);
+  }
+  
+ }
 
  /**
   * An object of type Canvas is used for the drawing area.
@@ -307,19 +357,19 @@ public class DrawTextPanel extends JPanel  {
  /**
   * Save the current canvas into a text file
   */
- private void saveFile() {
+ (canvas.getBackground().getGreen());
+   out.println(canvas.getBackground().getBlue());
+   if (theStrings != null)
+    for (DrawTextItem s: theStrings) {
+     out.println("theString:");
+     out.printprivate void saveFile() {
   File saveAs = fileChooser.getOutputFile(this, "Save As", "Text Collage.txt");
   try {
    PrintWriter out = new PrintWriter(saveAs);
 
    out.println("New text collage file");
    out.println(canvas.getBackground().getRed());
-   out.println(canvas.getBackground().getGreen());
-   out.println(canvas.getBackground().getBlue());
-   if (theStrings != null)
-    for (DrawTextItem s: theStrings) {
-     out.println("theString:");
-     out.println(s.getString());
+   out.printlnln(s.getString());
      out.println(s.getX());
      out.println(s.getY());
      out.println(s.getFont().getName());
@@ -351,50 +401,6 @@ public class DrawTextPanel extends JPanel  {
   }
  }
  
- /**
-  * Open a saved text file and read the background color as well as the text
-  * strings.
-  */
- private void openFile() {
-  File openFile = fileChooser.getInputFile(this, "Open Saved File");
-  try {
-   Scanner in = new Scanner(openFile);
-   if (!in.nextLine().equals("New text collage file")) {
-    JOptionPane.showMessageDialog(this, "Not a valid file \"" + openFile + "\".");
-    return;
-   }
-   Color savedBg = new Color(in.nextInt(), in.nextInt(), in.nextInt());
-   ArrayList<DrawTextItem> newStrings = new ArrayList<DrawTextItem>();
-   DrawTextItem newItem;
-   in.nextLine();  //skip to the next line before read a new line
-   while (in.hasNext() && in.nextLine().equals("theString:")) {
-    newItem = new DrawTextItem(in.nextLine(),
-      in.nextInt(), in.nextInt());
-    in.nextLine();  //skip to the next line before read a new line
-    newItem.setFont(new Font(in.nextLine(), in.nextInt(), in.nextInt()));
-    newItem.setTextColor(new Color(in.nextInt(), in.nextInt(), in.nextInt()));
-    newItem.setTextTransparency(in.nextDouble());
-    int r = in.nextInt();
-    int g = in.nextInt();
-    int b = in.nextInt();
-    if (r == -1)
-     newItem.setBackground(null);
-    else
-     newItem.setBackground(new Color(r, g, b));
-    newItem.setBackgroundTransparency(in.nextDouble());
-    newItem.setBorder(in.nextBoolean());
-    newItem.setMagnification(in.nextDouble());
-    newItem.setRotationAngle(in.nextDouble());
-    in.nextLine();  //skip to the next line before read a new line
-    newStrings.add(newItem);
-   }
-   //if no exception occurred, replace the current background and strings
-   canvas.setBackground(savedBg);
-   theStrings = newStrings;
-  } catch (FileNotFoundException e) {
-   JOptionPane.showMessageDialog(this, "Can't read the file \"" + openFile + "\".");
-   System.out.println("Error message: " + e);
-  }
-  
- }
+ 
+ 
 }
